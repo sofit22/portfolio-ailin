@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ailiñ | Muralista y Artista Plástica</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --font-serif: 'Playfair Display', serif;
+            --font-sans: 'Inter', sans-serif;
+            --bg-color: #050505;
+            --text-color: #e5e5e5;
+        }
+        body { margin: 0; overflow: hidden; background-color: var(--bg-color); color: var(--text-color); font-family: var(--font-sans); -webkit-tap-highlight-color: transparent; }
+        
+        /* --- UI PRINCIPAL --- */
+        #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        .ui-layer { position: fixed; z-index: 20; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 1.5rem; box-sizing: border-box; }
+        
+        /* HEADER: Empieza invisible. El splash ocupará su lugar. */
+        .header-title { 
+            font-family: var(--font-serif); 
+            font-style: italic; 
+            font-size: clamp(2rem, 10vw, 3.5rem); 
+            line-height: 1; 
+            margin-bottom: 0.5rem; 
+            letter-spacing: -0.02em; 
+            opacity: 0; 
+            visibility: hidden; 
+            color: #e5e5e5;
+        }
+
+        /* --- SPLASH SCREEN (WHITE MINIMAL) --- */
+        #splash-overlay {
+            position: fixed; inset: 0; z-index: 100;
+            background-color: #ffffff; /* FONDO BLANCO PURO */
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+        
+        #splash-logo {
+            font-family: var(--font-serif);
+            font-style: italic;
+            color: #000000; /* TEXTO NEGRO INICIAL */
+            font-size: clamp(4rem, 15vw, 8rem);
+            letter-spacing: -0.02em;
+            line-height: 1;
+            white-space: nowrap;
+            transform-origin: center center;
+        }
+
+        #splash-hint {
+            margin-top: 2rem;
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: #000000;
+            opacity: 0.6;
+            animation: pulse 2s infinite;
+            border-bottom: 1px solid black;
+            padding-bottom: 2px;
+        }
+
+        @keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 0.3; } }
+        
+        /* Resto UI */
+        .top-nav { pointer-events: auto; display: flex; gap: 2.5rem; font-size: 0.7rem; letter-spacing: 0.15em; font-weight: 500; opacity: 0; }
+        .nav-item { cursor: pointer; position: relative; text-decoration: none; color: white; opacity: 0.6; transition: opacity 0.3s; }
+        .nav-item:hover { opacity: 1; }
+        
+        .mobile-menu-btn { pointer-events: auto; background: none; border: 1px solid rgba(255,255,255,0.2); color: white; padding: 8px 16px; border-radius: 20px; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; backdrop-filter: blur(5px); opacity: 0; }
+        .mobile-menu-overlay { position: fixed; inset: 0; background: rgba(5,5,5,0.98); z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2rem; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .mobile-menu-overlay.active { opacity: 1; pointer-events: auto; }
+        .mobile-link { font-family: var(--font-serif); font-size: 2.5rem; font-style: italic; cursor: pointer; opacity: 0.8; }
+        
+        /* Páginas */
+        .page-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050505; z-index: 40; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; overflow-y: auto; padding-top: 100px; padding-bottom: 50px; -webkit-overflow-scrolling: touch; }
+        @media (min-width: 768px) { .page-overlay { background: rgba(5, 5, 5, 0.95); backdrop-filter: blur(10px); } }
+        .page-overlay.active { opacity: 1; pointer-events: auto; }
+        
+        .close-page-btn { position: fixed; top: 1.5rem; right: 1.5rem; z-index: 50; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 0.5rem 1.2rem; font-size: 0.7rem; letter-spacing: 0.1em; cursor: pointer; border-radius: 20px; transition: all 0.3s; opacity: 0; pointer-events: none; backdrop-filter: blur(5px); }
+        .close-page-btn.visible { opacity: 1; pointer-events: auto; }
+
+        .about-container { max-width: 1000px; margin: 0 auto; padding: 0 1.5rem; display: grid; grid-template-columns: 1fr; gap: 3rem; }
+        @media (min-width: 768px) { .about-container { grid-template-columns: 1fr 1fr; } }
+        .profile-img { width: 100%; border-radius: 2px; filter: grayscale(100%); }
+        
+        /* LISTA DE TRABAJOS */
+        .works-grid { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }
+        .year-group { margin-bottom: 3rem; border-top: 1px solid #333; padding-top: 1.5rem; }
+        
+        /* FIX VISIBILIDAD: Animación más simple y segura */
+        .work-item-anim { 
+            opacity: 0; 
+            transform: translateY(20px); 
+        }
+
+        .year-label { font-family: var(--font-serif); font-size: 2.5rem; opacity: 0.3; margin-bottom: 1.5rem; color: #fff; }
+        
+        /* HOVER EFECTO */
+        .work-item { 
+            display: flex; flex-direction: column; align-items: flex-start; 
+            padding: 1.5rem 1rem; 
+            border-bottom: 1px solid rgba(255,255,255,0.1); 
+            cursor: pointer; 
+            transition: all 0.3s ease;
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+        .work-item:hover {
+            background-color: rgba(255,255,255,0.08);
+            padding-left: 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.6);
+        }
+        
+        @media(min-width: 768px) { .work-item { flex-direction: row; justify-content: space-between; align-items: center; } }
+        
+        .work-title { 
+            font-size: 1.2rem; font-family: var(--font-serif); font-style: italic; margin-bottom: 0.5rem; 
+            color: #e5e5e5; /* Color explícito */
+        }
+        @media(min-width: 768px) { .work-title { font-size: 1.5rem; margin-bottom: 0; } }
+        
+        .work-meta { 
+            font-size: 0.7rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.1em; 
+            color: #ccc; /* Color explícito */
+        }
+        .work-item:hover .work-meta { opacity: 1; color: #fff; }
+
+        .specs-grid { display: grid; grid-template-columns: 1fr; gap: 2rem; border-top: 1px solid rgba(255,255,255,0.15); border-bottom: 1px solid rgba(255,255,255,0.15); padding: 2rem 0; margin-bottom: 3rem; }
+        @media(min-width: 768px) { .specs-grid { grid-template-columns: repeat(3, 1fr); } }
+        .spec-item h3 { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.5; margin-bottom: 0.8rem; }
+        .spec-item p { font-family: var(--font-serif); font-size: 1.1rem; font-style: italic; }
+
+        #home-footer { opacity: 0; }
+
+        /* --- MODAL --- */
+        .project-modal { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(8,8,8,0.98); 
+            z-index: 60; opacity: 0; pointer-events: none; 
+            transition: opacity 0.4s;
+            overflow-y: auto; -webkit-overflow-scrolling: touch; 
+            backdrop-filter: blur(5px);
+        }
+        .project-modal.active { opacity: 1; pointer-events: auto; }
+        .modal-inner { max-width: 1400px; margin: 0 auto; padding: 3rem 1.5rem; }
+        .modal-block { opacity: 0; } 
+        
+        /* Grilla del modal mejorada para fotos estandarizadas */
+        #modal-gallery {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            width: 100%;
+        }
+        @media (min-width: 768px) {
+            #modal-gallery {
+                grid-template-columns: repeat(2, 1fr); /* 2 columnas en PC */
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- SPLASH SCREEN -->
+    <div id="splash-overlay" onclick="startExperience()">
+        <div id="splash-content">
+            <h1 id="splash-logo">Ailiñ</h1>
+            <p id="splash-hint">INGRESAR</p>
+        </div>
+    </div>
+
+    <!-- MENÚ MÓVIL -->
+    <div id="mobile-menu" class="mobile-menu-overlay">
+        <div onclick="openPageFromMobile('works')" class="mobile-link">Trabajos</div>
+        <div onclick="openPageFromMobile('about')" class="mobile-link">Sobre Mí</div>
+        <div onclick="openPageFromMobile('contact')" class="mobile-link">Contacto</div>
+        <button onclick="toggleMobileMenu()" class="mt-8 text-xs tracking-widest uppercase opacity-50 p-4">Cerrar</button>
+    </div>
+
+    <!-- UI Overlay -->
+    <div class="ui-layer">
+        <div class="flex justify-between items-start w-full pointer-events-auto">
+            <div style="cursor: pointer;" onclick="closeAllPages()">
+                <h1 id="final-header-title" class="header-title">Ailiñ</h1>
+                <p id="header-subtitle" class="font-sans text-xs opacity-0 tracking-[0.2em] uppercase transition-opacity duration-700">Muralista y Artista Plástica</p>
+            </div>
+            <nav id="desktop-nav" class="top-nav hidden md:flex">
+                <a onclick="openPage('works')" class="nav-item">TRABAJOS</a>
+                <a onclick="openPage('about')" class="nav-item">SOBRE MÍ</a>
+                <a onclick="openPage('contact')" class="nav-item">CONTACTO</a>
+            </nav>
+            <button id="mobile-btn" onclick="toggleMobileMenu()" class="mobile-menu-btn md:hidden">MENU</button>
+        </div>
+        <div class="flex justify-between items-end w-full" id="home-footer">
+            <div class="text-xs font-mono opacity-30">BA / ARG</div>
+            <div class="text-xs uppercase tracking-[0.3em] opacity-40 animate-pulse hidden md:block">Scroll para explorar</div>
+            <div class="text-xs uppercase tracking-[0.2em] opacity-40 animate-pulse md:hidden">Desliza</div>
+        </div>
+    </div>
+    <button id="close-btn" class="close-page-btn" onclick="closeAllPages()">CERRAR</button>
+
+    <!-- PÁGINAS -->
+    <div id="page-works" class="page-overlay">
+        <div class="works-grid pt-32" id="works-list-container"></div>
+    </div>
+
+    <div id="page-about" class="page-overlay">
+        <div class="about-container">
+            <div class="profile-img-container">
+                <img id="profile-image-el" src="" onerror="this.style.opacity='0.2'" class="profile-img" alt="Ailiñ">
+                <div class="mt-2 text-xs font-mono opacity-50 text-right">FOTO: PORTFOLIO</div>
+            </div>
+            <div class="bio-text">
+                <h2 class="text-3xl md:text-4xl font-serif italic mb-6">Ailiñ Tulas Raiman</h2>
+                <p class="text-lg md:text-xl font-serif italic mb-6 leading-relaxed">"El arte público monumental es siempre político y construye nuevas formas de ver el mundo."</p>
+                <p class="mb-4 leading-relaxed opacity-90">Llevo diez años pintando murales, una práctica que no solo ha fortalecido mi desarrollo artístico, sino que también me ha permitido relacionarme mejor con las personas. A través de cada obra busco generar un intercambio donde el diálogo, las experiencias y el entorno influyen directamente en el proceso creativo.</p>
+                <p class="mb-8 leading-relaxed opacity-90">Participé en murales como los de la campaña por el aborto legal o la lucha de los jubiladxs, entendiendo el muro como un espacio de lucha y visibilización.</p>
+                <div class="border-t border-gray-300 pt-6 mt-8">
+                    <div class="text-xs uppercase tracking-widest text-gray-500 mb-4">Formación Académica</div>
+                    <div class="mb-4 text-sm"><span class="font-mono opacity-50 mr-4">2025</span> <strong>Lic. y Prof. en Artes Plásticas (Muralismo)</strong><br><span class="opacity-70 ml-12 block">Universidad Nacional de La Plata</span></div>
+                    <div class="mb-2 text-sm"><span class="font-mono opacity-50 mr-4">EN CURSO</span> <strong>Artes Plásticas (Cerámica)</strong><br><span class="opacity-70 ml-12 block">Universidad Nacional de La Plata</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-contact" class="page-overlay">
+        <div class="max-w-lg mx-auto px-6 py-12 text-center">
+            <p class="text-xs tracking-widest uppercase opacity-60 mb-8">Contacto</p>
+            <div class="font-serif text-4xl md:text-5xl italic mb-8 leading-tight">¿Creamos algo<br>juntos?</div>
+            
+            <p class="text-xs font-mono opacity-40 mb-12">La Plata, Buenos Aires</p>
+
+            <div class="flex justify-center gap-16 mt-12 flex-wrap">
+                <!-- Instagram -->
+                <a href="https://www.instagram.com/ailin.payne7/" target="_blank" class="group flex flex-col items-center gap-4 no-underline text-white">
+                    <div class="w-16 h-16 border border-white/20 rounded-full flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all duration-300 transform group-hover:scale-110"><i class="fab fa-instagram text-2xl"></i></div>
+                    <span class="text-xs tracking-[0.2em] uppercase opacity-50 group-hover:opacity-100 transition-opacity">Instagram</span>
+                </a>
+                
+                <!-- WhatsApp -->
+                <a href="https://wa.me/5492920341450" target="_blank" class="group flex flex-col items-center gap-4 no-underline text-white">
+                    <div class="w-16 h-16 border border-white/20 rounded-full flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all duration-300 transform group-hover:scale-110"><i class="fab fa-whatsapp text-2xl"></i></div>
+                    <span class="text-xs tracking-[0.2em] uppercase opacity-50 group-hover:opacity-100 transition-opacity">WhatsApp</span>
+                </a>
+
+                <!-- Email -->
+                <a href="mailto:ailinalejandrat@gmail.com" class="group flex flex-col items-center gap-4 no-underline text-white">
+                    <div class="w-16 h-16 border border-white/20 rounded-full flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all duration-300 transform group-hover:scale-110"><i class="fas fa-envelope text-2xl"></i></div>
+                    <span class="text-xs tracking-[0.2em] uppercase opacity-50 group-hover:opacity-100 transition-opacity">Email</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE PROYECTO -->
+    <div id="project-modal" class="project-modal">
+        <div class="modal-inner">
+            <div class="flex flex-col md:flex-row justify-between items-start mb-8 md:mb-10 gap-4 modal-block" id="modal-header">
+                <div>
+                    <h2 id="modal-title" class="text-4xl md:text-6xl font-serif italic mb-2">Titulo</h2>
+                    <p class="text-xs tracking-widest uppercase opacity-60">Proyecto Mural</p>
+                </div>
+                <button onclick="closeProjectModal()" class="text-xs border border-gray-400 px-4 py-2 rounded-full hover:bg-black hover:text-white transition self-start">CERRAR</button>
+            </div>
+            
+            <div class="specs-grid modal-block" id="modal-specs">
+                <div class="spec-item"><h3>Ubicación / Cliente</h3><p id="modal-theme">-</p></div>
+                <div class="spec-item"><h3>Técnica</h3><p id="modal-tech">-</p></div>
+                <div class="spec-item"><h3>Año</h3><p id="modal-year">-</p></div>
+            </div>
+            
+            <div class="max-w-2xl mb-16 modal-block" id="modal-text">
+                <p id="modal-concept" class="text-lg md:text-xl font-serif leading-relaxed opacity-90"></p>
+            </div>
+            
+            <div id="modal-gallery" class="modal-block"></div>
+            
+            <div class="mt-16 text-center pb-8 modal-block" id="modal-footer">
+                <button onclick="closeProjectModal()" class="text-xs tracking-widest opacity-50 hover:opacity-100 p-4">VOLVER AL INICIO</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <script>
+        const PROJECTS = [
+            {
+    id: 1,
+    title: "Espacios de Lucha (Tesis)",
+    theme: "Calle 69 e/ 2 y 3, La Plata",
+    year: 2025,
+    tech: "Pegatinas (14m x 3m)",
+    concept: "Tesis de grado. En este trabajo se relaciona la lucha de lxs jubiladxs con el mural como espacios públicos ocupados para visibilizar diferentes luchas sociales. El mural reunió dibujos de jubiladxs en acción —en marchas y trabajando— con la presencia destacada de Norma Plá. Presentó un diálogo con quienes transitan la zona, recuperando la fuerza, la historia y la resistencia de las personas mayores, y reivindicando su rol activo en las luchas sociales.",
+    images: ["assets/tesis.jpg", "assets/tesis01.jpg", "assets/tesis02.jpg", "assets/tesis03.jpg",],
+  },
+  {
+    id: 2,
+    title: "Ellas no estaban pintadas",
+    theme: "Ministerio de Mujeres, Bahía Blanca",
+    year: 2022,
+    tech: "Pintura (12m x 3m)",
+    concept: "Mural realizado en el marco del Programa “Ellas no estaban pintadas”, del Ministerio de Mujeres y diversidad, junto a la artista Topaia",
+    images: ["assets/bahia.jpg"],
+  },
+  {
+    id: 3,
+    title: "El Agua para el Pueblo",
+    theme: "Barrio Ceferino, Viedma",
+    year: 2022,
+    tech: "Muralismo",
+    concept: "Mural realizado en el contexto de las jornadas de pintadas organizadas por la agrupación 'Del Barrio para el Barrio' en Viedma, Río Negro.",
+    images: ["assets/viedma.jpg"],
+  },
+  {
+    id: 4,
+    title: "Encuentro Plurinacional de Mujeres y Disidencias",
+    theme: "C.C. Olga Vázquez, La Plata",
+    year: 2021,
+    tech: "Mixta",
+    concept: "Participé en este mural colectivo donde mujeres y disidencias nos juntamos a idear e intervenir el espacio como invitación al Encuentro Plurinacional que se realizaría ese año. Fue un proceso de creación compartida que anticipaba la potencia de lo que vendría: miles de compañeras ocupando las calles de La Plata. El mural documenta esa energía colectiva y reivindica la calle como espacio de conquista feminista.",
+    images: ["assets/plurinacional.jpg", "assets/plurinacional01.jpg", "assets/plurinacional02.png", "assets/plurinacional03.jpg", "assets/plurinacional04.png", "assets/plurinacional05.jpg", "assets/plurinacional06.jpg", "assets/plurinacional07.jpg", "assets/plurinacional08.jpg", "assets/plurinacional09.jpg", "assets/plurinacional10.jpg", "assets/plurinacional11.jpg", "assets/plurinacional12.jpg", "assets/plurinacional14.jpg", "assets/plurinacional15.jpg", "assets/plurinacional16.jpg", "assets/plurinacional17.jpg", "assets/plurinacional18.jpg", "assets/plurinacional19.jpg", "assets/plurinacional20.jpg", "assets/plurinacional21.jpg", "assets/plurinacional22.jpg", "assets/plurinacional23.jpg", "assets/plurinacional24.jpg", "assets/plurinacional25.jpg", "assets/plurinacional26.jpg"],
+  },
+  {
+    id: 5,
+    title: "Rock en Baradero",
+    theme: "Festival Rock en Baradero",
+    year: 2020,
+    tech: "Pintura en vivo (3m x 4m)",
+    concept: "Participar del Festival de Rock en Baradero fue una experiencia única, donde el arte y la música se encontraron. La productora valoró nuestro trabajo, remunerando a los artistas y permitiéndonos habitar el festival día a día, pintando y siendo parte viva de su energía.",
+    images: ["assets/baradero.jpg", "assets/baradero01.jpg"],
+  },
+  {
+    id: 6,
+    title: "Mural Dietética Nutridiet",
+    theme: "Av. 7 y 34, La Plata",
+    year: 2020,
+    tech: "Pintura (4m x 6m)",
+    concept: "Mural para Dietética ubicada en Av. 7 entre 34 y 35. Realizado junto a dos muralistas: Victoria Gorgojo y Topaia",
+    images: ["assets/nutridiet01.jpg"],
+  },
+  {
+    id: 7,
+    title: "Solidaridad con Chile",
+    theme: "Facultad de Artes, UNLP",
+    year: 2019,
+    tech: "Mural",
+    concept: "Participé en este mural colectivo realizado durante el estallido social chileno de 2019 en la Facultad de Bellas Artes de La Plata. Como respuesta a la represión que enfrentaba el pueblo chileno, estudiantes y artistas nos organizamos para llenar los muros de la facultad con intervenciones artísticas. Fue una jornada de creación compartida donde transformamos el espacio en un gesto de solidaridad y resistencia transnacional.",
+    images: ["assets/chile.jpg", "assets/chile01.jpg","assets/chile02.jpg","assets/chile03.jpg","assets/chile04.jpg","assets/chile05.jpg", "assets/chile06.jpg","assets/chile07.jpg","assets/chile08.jpg", "assets/chile09.jpg"],
+  },
+  {
+    id: 8,
+    title: "Camping AMEMOP",
+    theme: "Punta Lara",
+    year: 2019,
+    tech: "Pintura (8m x 4m)",
+    concept: "Mural de gran escala realizado en el camping A.M.E.M.O.P. ubicado en Punta Lara junto a la artista Topaia.",
+    images: ["assets/amemop.jpg"],
+  },
+  {
+    id: 9,
+    title: "Farmacia López Toris",
+    theme: "44 y 139, San Carlos",
+    year: 2019,
+    tech: "Aerosoles (4m x 2.5m)",
+    concept: "Realizado desde la Facultad de Artes.",
+    images: ["assets/farmacia.jpg"],
+  },
+  {
+    id: 10,
+    title: "La Copiadora 44",
+    theme: "Av. 44 e/ 4 y 5, La Plata",
+    year: 2019,
+    tech: "Pintura (4m x 3.5m)",
+    concept: "Mural realizado en fotocopiadora ubicada en av.44 entre 4y5, La Plata.",
+    images: ["assets/copiadora.jpg"],
+  },
+  {
+    id: 11,
+    title: "Mural Calle 56",
+    theme: "Calle 56 esq. 20, La Plata",
+    year: 2019,
+    tech: "Pintura",
+    concept: "Mural realizado junto a la artista Topaia.",
+    images: ["assets/calle56.jpg"],
+  },
+  {
+    id: 12,
+    title: "Jardín Maternal",
+    theme: "25 de Mayo",
+    year: 2018,
+    tech: "Muralismo",
+    concept: "Mural realizado para institución educativa en la ciudad de 25 de Mayo.",
+    images: ["assets/jardin.jpg"],
+  },
+  {
+    id: 13,
+    title: "Sede Comparsa Acuario",
+    theme: "Pipinas",
+    year: 2018,
+    tech: "Pintura (12m x 5m)",
+    concept: "Realizado junto al colectivo 'Pan y Cucha', grupo de mujeres muralistas y feministas.",
+    images: ["assets/pipinas.jpg"],
+  },
+  {
+    id: 14,
+    title: "Centro de día Ser Si Mismo",
+    theme: "Ringuelet",
+    year: 2017,
+    tech: "Pegatinas (10m x 4m)",
+    concept: "Trabajo colaborativo con los pacientes del centro, realizado como cierre de un taller de arte.",
+    images: ["assets/ringuelet.jpg"],
+  },
+  ];
+
+        const CONFIG = { count: 40, distance: 300, autoSpeed: 0.05, bgColor: '#050505', gridColor: '#444444' };
+        let scene, camera, renderer, planes = [], scroll = { target: 0, current: 0 };
+        let starParticles; // Para las estrellas
+        let isIntroFinished = false;
+        let hoveredObject = null; 
+
+        window.onload = function() {
+            try { 
+                init3D(); 
+                animate3D(); 
+            } catch (e) { console.error("Error init 3D:", e); }
+        };
+
+        function startExperience() {
+            if(isIntroFinished) return;
+            isIntroFinished = true;
+
+            const splashLogo = document.getElementById('splash-logo');
+            const splashContent = document.getElementById('splash-content');
+            const splashOverlay = document.getElementById('splash-overlay');
+            const finalHeader = document.getElementById('final-header-title');
+            
+            // Medimos la posición final
+            finalHeader.style.visibility = 'visible';
+            finalHeader.style.opacity = '0.01'; 
+            
+            const startRect = splashLogo.getBoundingClientRect();
+            const endRect = finalHeader.getBoundingClientRect();
+            
+            const xDiff = endRect.left - startRect.left;
+            const yDiff = endRect.top - startRect.top;
+            const scaleFactor = endRect.height / startRect.height;
+
+            // Zoom In Cámara 3D
+            gsap.to(scroll, { target: scroll.target + 120, duration: 2.5, ease: "expo.inOut" });
+
+            const tl = gsap.timeline();
+
+            // 1. Quitar hint inmediatamente
+            tl.to("#splash-hint", { duration: 0.2, opacity: 0, display: "none" })
+            
+            // 2. Mover logo y cambiar color a BLANCO SITIO (#e5e5e5)
+            .to(splashLogo, {
+                duration: 1.5,
+                x: xDiff,
+                y: yDiff,
+                scale: scaleFactor,
+                color: "#e5e5e5", 
+                transformOrigin: "top left",
+                ease: "power3.inOut",
+                force3D: true
+            }, "move")
+            
+            // 3. Desvanecer fondo BLANCO para mostrar el sitio NEGRO
+            .to(splashOverlay, {
+                duration: 1.2,
+                opacity: 0, 
+                ease: "power2.inOut",
+                onComplete: () => { splashOverlay.style.display = 'none'; }
+            }, "move")
+
+            // 4. Swap instantáneo de logos (sin superposición)
+            .set(splashLogo, { opacity: 0 }) 
+            .set(finalHeader, { opacity: 1, visibility: 'visible' }) 
+
+            // 5. Entrar UI
+            .to(["#header-subtitle", "#desktop-nav", "#mobile-btn", "#home-footer"], {
+                duration: 1,
+                opacity: 1,
+                y: 0,
+                stagger: 0.1,
+                ease: "power2.out"
+            });
+        }
+
+        function init3D() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(CONFIG.bgColor);
+            scene.fog = new THREE.FogExp2(CONFIG.bgColor, 0.012);
+
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 100);
+            camera.position.z = 5;
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.outputColorSpace = THREE.SRGBColorSpace; 
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+            
+            createStarField(); // Crear Estrellas
+            createFloatingGallery();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth/window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+            window.addEventListener('wheel', (e) => { 
+                if(isIntroFinished) scroll.target += e.deltaY * 0.03; 
+            }, {passive: true});
+            
+            let touchStart = 0;
+            window.addEventListener('touchstart', (e) => { touchStart = e.touches[0].clientY; }, {passive: true});
+            window.addEventListener('touchmove', (e) => { 
+                if(isIntroFinished) {
+                    const delta = touchStart - e.touches[0].clientY;
+                    scroll.target += delta * 0.15; 
+                    touchStart = e.touches[0].clientY;
+                }
+            }, {passive: true});
+        }
+
+        // --- SISTEMA DE ESTRELLAS ---
+        function createStarField() {
+            const starCount = 2000;
+            const starGeo = new THREE.BufferGeometry();
+            const starPos = new Float32Array(starCount * 3);
+            const starInitZ = new Float32Array(starCount);
+
+            for (let i = 0; i < starCount; i++) {
+                const x = (Math.random() - 0.5) * 200; // Esparcidas ancho
+                const y = (Math.random() - 0.5) * 150; // Esparcidas alto
+                const z = -Math.random() * CONFIG.distance; // Profundidad
+                
+                starPos[i * 3] = x;
+                starPos[i * 3 + 1] = y;
+                starPos[i * 3 + 2] = z;
+                starInitZ[i] = z; // Guardar Z original para el loop
+            }
+
+            starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+            starGeo.setAttribute('initialZ', new THREE.BufferAttribute(starInitZ, 1));
+
+            const starMat = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 0.3,
+                transparent: true,
+                opacity: 0.8,
+                sizeAttenuation: true
+            });
+
+            starParticles = new THREE.Points(starGeo, starMat);
+            scene.add(starParticles);
+        }
+
+        function createFloatingGallery() {
+            const loader = new THREE.TextureLoader();
+            loader.setCrossOrigin('anonymous');
+            const cvs = document.createElement('canvas'); cvs.width = 400; cvs.height = 500;
+            const cx = cvs.getContext('2d'); 
+            cx.fillStyle = '#1a1a1a'; cx.fillRect(0,0,400,500); 
+            const defaultTex = new THREE.CanvasTexture(cvs);
+
+            const items = [];
+            if(Array.isArray(PROJECTS)) {
+                PROJECTS.forEach(p => {
+                    if(p.images && Array.isArray(p.images)) {
+                        p.images.forEach(filename => items.push({filename, project: p}));
+                    }
+                });
+            }
+            if(items.length === 0) for(let k=0; k<10; k++) items.push({filename: "", project: {title: "Sin Imagen", year: "-"}});
+
+            const geo = new THREE.PlaneGeometry(1, 1);
+            
+            for(let i=0; i<CONFIG.count; i++) {
+                const data = items[i % items.length];
+                // Estado inicial: Color grisáceo para que al iluminarse (blanco) se note el cambio dinámico
+                const mat = new THREE.MeshBasicMaterial({ color: 0xdddddd, side: THREE.DoubleSide, transparent: true, map: defaultTex });
+                
+                const mesh = new THREE.Mesh(geo, mat);
+                const z = -i * (CONFIG.distance/CONFIG.count);
+                // Normalized scale logic based on aspect ratio
+                // Set initial scale to something safe. It will be updated when image loads.
+                mesh.scale.set(5, 5, 1);
+                
+                // Position logic: spread out a bit more to avoid crowding
+                // Random position X [-25, 25], Y [-15, 15]
+                mesh.position.set((Math.random()-0.5)*50, (Math.random()-0.5)*30, z);
+                mesh.userData = { originalZ: z, project: data.project };
+                scene.add(mesh);
+                planes.push(mesh);
+
+                if(data.filename) {
+                    const safePath = encodeURI(data.filename);
+                    const img = new Image();
+                    img.src = safePath;
+                    img.crossOrigin = "Anonymous";
+                    img.onload = function() {
+                        const tex = new THREE.Texture(img);
+                        tex.needsUpdate = true;
+                        tex.colorSpace = THREE.SRGBColorSpace;
+                        tex.minFilter = THREE.LinearFilter;
+                        tex.magFilter = THREE.LinearFilter;
+                        tex.generateMipmaps = false;
+                        mat.map = tex;
+                        mat.needsUpdate = true;
+                        
+                        const aspect = img.width / img.height;
+                        // Normalize size: ensure max dimension is around baseSize
+                        const baseSize = 6; 
+                        if (aspect > 1) {
+                             mesh.scale.set(baseSize, baseSize / aspect, 1);
+                             mesh.userData.baseScale = { x: baseSize, y: baseSize / aspect };
+                        } else {
+                             mesh.scale.set(baseSize * aspect, baseSize, 1);
+                             mesh.userData.baseScale = { x: baseSize * aspect, y: baseSize };
+                        }
+                    };
+                } else {
+                    mesh.userData.baseScale = { x: 5, y: 5 };
+                }
+            }
+        }
+
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        });
+
+        window.addEventListener('click', (e) => {
+            if(document.querySelector('.page-overlay.active') || document.querySelector('.project-modal.active') || document.querySelector('.mobile-menu-overlay.active')) return;
+            if(e.target.closest('.ui-layer') || e.target.closest('button') || e.target.closest('a')) return;
+            if(!isIntroFinished) return;
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            raycaster.params.Points.threshold = 1;
+            const intersects = raycaster.intersectObjects(planes);
+            if(intersects.length > 0) openProjectDetail(intersects[0].object.userData.project);
+        });
+
+        // UI Logic
+        function toggleMobileMenu() { document.getElementById('mobile-menu').classList.toggle('active'); }
+        function openPageFromMobile(page) { toggleMobileMenu(); openPage(page); }
+        function openPage(pageName) {
+            closeAllPages();
+            const page = document.getElementById(`page-${pageName}`);
+            if (page) {
+                page.classList.add('active');
+                document.getElementById('close-btn').classList.add('visible');
+                if (pageName === 'works') renderWorksList();
+                if (pageName === 'about') document.getElementById('profile-image-el').src = "assets/perfil.jpg";
+            }
+        }
+        function closeAllPages() {
+            document.querySelectorAll('.page-overlay').forEach(p => p.classList.remove('active'));
+            document.getElementById('close-btn').classList.remove('visible');
+            document.getElementById('mobile-menu').classList.remove('active');
+        }
+        function renderWorksList() {
+            const container = document.getElementById('works-list-container');
+            container.innerHTML = '';
+            const groups = {};
+            PROJECTS.forEach(p => { if (!groups[p.year]) groups[p.year] = []; groups[p.year].push(p); });
+            Object.keys(groups).sort((a,b) => b - a).forEach((year, index) => {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'year-group';
+                groupDiv.innerHTML = `<div class="year-label">${year}</div>`;
+                groups[year].forEach(proj => {
+                    const item = document.createElement('div');
+                    item.className = 'work-item work-item-anim'; // Class para animación GSAP
+                    item.onclick = () => openProjectDetail(proj);
+                    item.innerHTML = `<div class="work-title">${proj.title}</div><div class="work-meta">${proj.theme}</div>`;
+                    groupDiv.appendChild(item);
+                });
+                container.appendChild(groupDiv);
+            });
+            
+            // Animación "Bloques" - FADE IN + SLIDE UP (SEGURO)
+            gsap.fromTo(".work-item-anim", 
+                { 
+                    y: 20, 
+                    opacity: 0,
+                },
+                { 
+                    y: 0,
+                    opacity: 1,
+                    duration: 0.8,
+                    stagger: 0.1, 
+                    ease: "power2.out",
+                    delay: 0.1
+                }
+            );
+        }
+        function openProjectDetail(project) {
+            const modal = document.getElementById('project-modal');
+            document.getElementById('modal-title').textContent = project.title;
+            document.getElementById('modal-theme').textContent = project.theme || "-";
+            document.getElementById('modal-tech').textContent = project.tech || "-";
+            document.getElementById('modal-year').textContent = project.year;
+            document.getElementById('modal-concept').textContent = project.concept || "";
+            const gal = document.getElementById('modal-gallery');
+            gal.innerHTML = '';
+            if(project.images && project.images.length > 0) {
+                project.images.forEach(filename => {
+                    const link = document.createElement('a'); link.href = filename; link.target = '_blank'; link.className = "contents";
+                    const img = document.createElement('img'); img.src = filename; 
+                    // FIXED: aesthetic standard sizes using object-cover and aspect-ratio
+                    img.className = "w-full h-64 md:h-80 object-cover shadow-2xl bg-gray-900 mb-4 cursor-pointer hover:opacity-90 transition-opacity"; 
+                    img.onerror = function() { this.style.display = 'none'; };
+                    link.appendChild(img); gal.appendChild(link);
+                });
+            }
+            modal.classList.add('active');
+            
+            // ANIMACIÓN BRUTALISTA DE BLOQUES AL ABRIR PROYECTO
+            // Header desde arriba
+            gsap.fromTo("#modal-header", { y: -50, opacity: 0 }, { y: 0, opacity: 1, duration: 0.8, ease: "power4.out", delay: 0.1 });
+            // Specs desde la izquierda
+            gsap.fromTo("#modal-specs", { x: -50, opacity: 0 }, { x: 0, opacity: 1, duration: 0.8, ease: "power4.out", delay: 0.2 });
+            // Texto desde la derecha
+            gsap.fromTo("#modal-text", { x: 50, opacity: 0 }, { x: 0, opacity: 1, duration: 0.8, ease: "power4.out", delay: 0.3 });
+            // Galería desde abajo
+            gsap.fromTo("#modal-gallery", { y: 100, opacity: 0 }, { y: 0, opacity: 1, duration: 1, ease: "power4.out", delay: 0.4 });
+            // Footer aparece
+            gsap.fromTo("#modal-footer", { opacity: 0 }, { opacity: 1, duration: 1, delay: 0.8 });
+        }
+        function closeProjectModal() { document.getElementById('project-modal').classList.remove('active'); }
+
+        function animate3D() {
+            requestAnimationFrame(animate3D);
+            scroll.target += CONFIG.autoSpeed;
+            scroll.current += (scroll.target - scroll.current) * 0.05;
+
+            // ESTRELLAS: Bucle infinito
+            if(starParticles) {
+                const pos = starParticles.geometry.attributes.position.array;
+                const initZ = starParticles.geometry.attributes.initialZ.array;
+                for(let i=0; i<initZ.length; i++) {
+                    let z = (initZ[i] + scroll.current) % CONFIG.distance;
+                    if(z > 5) z -= CONFIG.distance; else if(z < -CONFIG.distance+5) z += CONFIG.distance;
+                    pos[i*3+2] = z;
+                }
+                starParticles.geometry.attributes.position.needsUpdate = true;
+            }
+
+            if(isIntroFinished && !document.querySelector('.project-modal.active')) {
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(planes);
+                if (intersects.length > 0) {
+                    const object = intersects[0].object;
+                    if (hoveredObject !== object) {
+                        if (hoveredObject) {
+                            const baseScale = hoveredObject.userData.baseScale || {x:5, y:5};
+                            // Reset color y escala
+                            hoveredObject.material.color.setHex(0xdddddd);
+                            gsap.to(hoveredObject.scale, { x: baseScale.x, y: baseScale.y, duration: 0.3 });
+                        }
+                        hoveredObject = object;
+                        const baseScale = hoveredObject.userData.baseScale || {x:5, y:5};
+                        // Highlight: blanco puro y escala mayor
+                        hoveredObject.material.color.setHex(0xffffff);
+                        gsap.to(hoveredObject.scale, { x: baseScale.x * 1.2, y: baseScale.y * 1.2, duration: 0.3 });
+                        document.body.style.cursor = 'pointer';
+                    }
+                } else {
+                    if (hoveredObject) {
+                        const baseScale = hoveredObject.userData.baseScale || {x:5, y:5};
+                        // Reset color y escala
+                        hoveredObject.material.color.setHex(0xdddddd);
+                        gsap.to(hoveredObject.scale, { x: baseScale.x, y: baseScale.y, duration: 0.3 });
+                        hoveredObject = null;
+                        document.body.style.cursor = 'default';
+                    }
+                }
+            }
+
+            planes.forEach(p => {
+                let z = (p.userData.originalZ + scroll.current) % CONFIG.distance;
+                if(z > 5) z -= CONFIG.distance; else if(z < -CONFIG.distance+5) z+=CONFIG.distance;
+                p.position.z = z;
+                if (p.material.map) { 
+                     if(z > -15) p.material.opacity = Math.max(0, (z - 2) / -17);
+                     else p.material.opacity = 1;
+                }
+            });
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>
