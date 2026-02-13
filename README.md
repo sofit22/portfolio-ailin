@@ -1,6 +1,6 @@
-Ailiñ Tulas Raiman - Portfolio de Muralismo y Artes Plásticas
+Ailiñ - Portfolio de Muralismo y Artes Plásticas
 
-Este es el portfolio interactivo de Ailiñ Tulas Raiman, Muralista y Artista Plástica. La web utiliza una estética brutalista combinada con una experiencia inmersiva en 3D para exhibir sus obras monumentales.
+Este es el portfolio interactivo de Ailiñ, Muralista y Artista Plástica. La web utiliza una estética brutalista combinada con una experiencia inmersiva en 3D para exhibir sus obras monumentales.
 
 🚀 Características
 
