@@ -404,7 +404,7 @@
       <source src="assets/musica.mp3" type="audio/mpeg" />
     </audio>
     <!-- SPLASH SCREEN -->
-    <div id="splash-overlay" onclick="startExperience()">
+    <div id="splash-overlay" onclick="startExperience(event)">
       <div id="splash-content">
         <h1 id="splash-logo">Ailiñ</h1>
         <p id="splash-hint">INGRESAR</p>
@@ -885,7 +885,8 @@
         }
       };
 
-      function startExperience() {
+      function startExperience(e) {
+        if (e) e.stopPropagation();
         document.getElementById("bg-music").play();
         if (isIntroFinished) return;
         isIntroFinished = true;
