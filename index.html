@@ -432,36 +432,38 @@
 
     <!-- UI Overlay -->
     <div class="ui-layer">
-  <div class="flex justify-between items-start w-full pointer-events-auto">
-    <div style="cursor: pointer" onclick="closeAllPages()">
-      <h1 id="final-header-title" class="header-title">Ailiñ</h1>
-      <p id="header-subtitle" class="font-sans text-xs opacity-0 tracking-[0.2em] uppercase transition-opacity duration-700">
-        Muralista y Artista Plástica
-      </p>
-    </div>
-    <nav id="desktop-nav" class="top-nav hidden md:flex">
-      <a onclick="openPage('works')" class="nav-item">TRABAJOS</a>
-      <a onclick="openPage('about')" class="nav-item">SOBRE MÍ</a>
-      <a onclick="openPage('contact')" class="nav-item">CONTACTO</a>
-    </nav>
-    <button id="mobile-btn" onclick="toggleMobileMenu()" class="mobile-menu-btn md:hidden">
-      MENU
-    </button>
-  </div>
+      <div class="flex justify-between items-start w-full pointer-events-auto">
+        <div style="cursor: pointer" onclick="closeAllPages()">
+          <h1 id="final-header-title" class="header-title">Ailiñ</h1>
+          <p id="header-subtitle" class="font-sans text-xs opacity-0 tracking-[0.2em] uppercase transition-opacity duration-700">
+            Muralista y Artista Plástica
+          </p>
+        </div>
+        <nav id="desktop-nav" class="top-nav hidden md:flex">
+          <a onclick="openPage('works')" class="nav-item">TRABAJOS</a>
+          <a onclick="openPage('about')" class="nav-item">SOBRE MÍ</a>
+          <a onclick="openPage('contact')" class="nav-item">CONTACTO</a>
+        </nav>
+        <button id="mobile-btn" onclick="toggleMobileMenu()" class="mobile-menu-btn md:hidden">
+          MENU
+        </button>
+      </div>
 
-  <div class="flex justify-between items-end w-full" id="home-footer">
-    <div class="text-[10px] font-mono opacity-30 tracking-widest">BA / ARG</div>
-    
-    <button id="music-toggle" class="pointer-events-auto text-[10px] uppercase tracking-[0.3em] opacity-40 hover:opacity-100 transition-opacity">
-        SOUND: ON
+      <div class="flex justify-between items-end w-full pointer-events-auto" id="home-footer">
+        <div class="text-[10px] font-mono opacity-30">BA / ARG</div>
+        
+        <button id="music-toggle" class="text-[10px] uppercase tracking-[0.3em] opacity-40 hover:opacity-100 transition-opacity">
+            SOUND: ON
+        </button>
+        
+        <div class="text-[10px] uppercase tracking-[0.3em] opacity-40 animate-pulse">
+            <span class="hidden md:block">Scroll para explorar</span>
+            <span class="md:hidden">Desliza para explorar</span>
+        </div>
+      </div>
+    </div> <button id="close-btn" class="close-page-btn" onclick="closeAllPages()">
+      CERRAR
     </button>
-    
-    <div class="text-[10px] uppercase tracking-[0.3em] opacity-40 animate-pulse">
-        <span class="hidden md:inline">Scroll para explorar</span>
-        <span class="md:hidden">Desliza para explorar</span>
-    </div>
-  </div>
-</div>
 
     <!-- PÁGINAS -->
     <div id="page-works" class="page-overlay">
