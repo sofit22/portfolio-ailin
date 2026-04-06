@@ -476,6 +476,7 @@
           <img
             id="profile-image-el"
             src=""
+            loading="lazy"
             onerror="this.style.opacity = '0.2'"
             class="profile-img"
             alt="Ailiñ"
@@ -1255,6 +1256,7 @@
             // FIXED: aesthetic standard sizes using object-cover and aspect-ratio
             img.className =
               "w-full h-64 md:h-80 object-cover shadow-2xl bg-gray-900 mb-4 cursor-pointer hover:opacity-90 transition-opacity";
+              img.loading = "lazy";
             img.onerror = function () {
               this.style.display = "none";
             };
